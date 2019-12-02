@@ -1,0 +1,71 @@
+﻿@page "/"
+
+@using System.Net.Http.Headers
+@using DadBlazorV2.Models
+@using Microsoft.AspNetCore.Components
+@inject HttpClient Http
+
+
+    <div class="container">
+        <div class="alert alert-warning" role="alert" style="max-width:1200px; margin:0 auto;">
+            @if (_isLoading)
+            {
+                <h1 class="hg-font">...</h1>
+            }
+            else
+            {
+                <h1 class="hg-font">@_jokeResult.joke</h1>
+                <img style='height: 100%; width: 100%; object-fit: contain' src=@_giphyResult.data.image_url />
+            }
+        </div>
+        <div class="grid-btn" style="max-width:1200px; margin:0 auto;">
+            <button type="button" disabled="@_disabled" style="float: right"
+                    class="btn btn-primary btn-lg hg-font fixed-button"
+                    onclick="@GetJokeAsync()">
+                New Joke
+            </button>
+        </div>
+    </div>
+
+@code {
+    bool _isLoading = true;
+    string _disabled => _isLoading ? "disabled" : null;
+    private GiphyResult _giphyResult;
+    private JokeResult _jokeResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetJokeAsync();
+    }
+
+    private async Task GetJokeAsync()
+    {
+        _isLoading = true;
+
+        Http.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        _jokeResult = await Http.GetJsonAsync<JokeResult>("https://icanhazdadjoke.com/");
+
+        await GetGiphy();
+
+        _isLoading = false;
+    }
+
+    private async Task GetGiphy()
+    {
+        var apiKey = "wu1pMTfqx1IeFxueo0KJkJ60JgJm63j0";
+
+        Http.DefaultRequestHeaders
+            .Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var baseUrl = "https://api.giphy.com/v1/";
+
+        var tag = "laughing";
+        var rating = "PG-13";
+        
+        _giphyResult = await Http.GetJsonAsync<GiphyResult>(baseUrl + "gifs/random" + "?apiKey=" + apiKey + "&tag=" + tag + "&rating=" + rating);
+    }
+}
